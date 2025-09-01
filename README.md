@@ -97,11 +97,14 @@ Initial parameter estimates are treated as **priors**.
 These were calculated as analytical approximations for each home.
 In unconstrained space (ℝ):
 
-- Positive-only parameters (R, C, σ) use an exponential transform:  
+- Positive-only parameters (R, C, σ) use an exponential transform:
+
   $$
   z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
   $$
-- Fractional parameters (a ∈ (0,1)) use the sigmoid transform:  
+
+- Fractional parameters (a ∈ (0,1)) use the sigmoid transform:
+  
   $$
   a = \sigma(z) = \frac{1}{1 + e^{-z}}
   $$
@@ -171,11 +174,14 @@ $$
 ## 5. Metrics
 
 Performance is evaluated using:
-- **RMSE** (Root Mean Squared Error): 
+- **RMSE** (Root Mean Squared Error):
+  
   $$
   \text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^N \left( T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}} \right)^2 }
   $$
+
 - **CVRMSE** (Coefficient of Variation of RMSE):
+  
   $$
   \text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
   $$
