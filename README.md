@@ -99,21 +99,21 @@ In unconstrained space (ℝ):
 
 - Positive-only parameters (R, C, σ) use an exponential transform:
 
-  $$
-  z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
-  $$
+$$
+z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
+$$
 
 - Fractional parameters (a ∈ (0,1)) use the sigmoid transform:
   
-  $$
-  a = \sigma(z) = \frac{1}{1 + e^{-z}}
-  $$
+$$
+a = \sigma(z) = \frac{1}{1 + e^{-z}}
+$$
 
 ADVI fits the posterior by maximising the **Evidence Lower Bound (ELBO):**
 
-  $$
-  \text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta) \| p(\theta))
-  $$
+$$
+\text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta) \| p(\theta))
+$$
 
 This yields calibrated RC parameters with uncertainty estimates.
 
@@ -124,9 +124,9 @@ This yields calibrated RC parameters with uncertainty estimates.
 The RC model alone cannot capture all dynamics (e.g. sensor noise, measurement error, or unmodelled thermal dynamics).  
 We define the **residual heating/cooling rate** as:
 
-  $$
-  y_t = \frac{\Delta T_{in,t}}{\Delta t} - \frac{\Delta T_{in,t}^{RC}}{\Delta t}
-  $$
+$$
+y_t = \frac{\Delta T_{in,t}}{\Delta t} - \frac{\Delta T_{in,t}^{RC}}{\Delta t}
+$$
 
 where:
 - ΔTᵢₙ,ₜ: observed indoor temperature change,
@@ -176,15 +176,15 @@ $$
 Performance is evaluated using:
 - **RMSE** (Root Mean Squared Error):
   
-  $$
-  \text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^N \left( T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}} \right)^2 }
-  $$
+$$
+\text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^N \left( T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}} \right)^2 }
+$$
 
 - **CVRMSE** (Coefficient of Variation of RMSE):
   
-  $$
-  \text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
-  $$
+$$
+\text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
+$$
 
 ---
 
