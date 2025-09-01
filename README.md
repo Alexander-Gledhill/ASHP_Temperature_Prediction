@@ -25,13 +25,24 @@ The building thermal zone is approximated as a **3R2C network** consisting of:
 
 The thermal balance equations are:
 
-\[
-C_{in} \frac{dT_{in}}{dt} = \frac{T_e - T_{in}}{R_{ie}} + \frac{T_a - T_{in}}{R_{ia}} + a_{sol,in} Q_{sol} + a_{int,in} Q_{int} + Q_{ah}
-\]
+$$
+C_{in}\,\frac{dT_{in}}{dt}
+=
+\frac{T_e - T_{in}}{R_{ie}}
++ \frac{T_a - T_{in}}{R_{ia}}
++ a_{\text{sol,in}}\, Q_{\text{sol}}
++ a_{\text{int,in}}\, Q_{\text{int}}
++ Q_{ah}
+$$
 
-\[
-C_{en} \frac{dT_e}{dt} = \frac{T_{in} - T_e}{R_{ie}} + \frac{T_a - T_e}{R_{ea}} + a_{sol,en} Q_{sol} + a_{int,en} Q_{int}
-\]
+$$
+C_{en}\,\frac{dT_e}{dt}
+=
+\frac{T_{in} - T_e}{R_{ie}}
++ \frac{T_a - T_e}{R_{ea}}
++ a_{\text{sol,en}}\, Q_{\text{sol}}
++ a_{\text{int,en}}\, Q_{\text{int}}
+$$
 
 where:
 - \(T_{in}\): indoor air temperature,
