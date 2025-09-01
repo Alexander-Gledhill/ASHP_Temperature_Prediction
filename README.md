@@ -1,5 +1,4 @@
 # Hybrid RC–LSTM Model for Indoor Temperature Prediction
-
 Requires: Python 3.9+, PyTorch, NumPy, Pandas, Matplotlib
 
 This repository contains code for a **hybrid physics–machine learning model** to forecast indoor temperature in buildings.  
@@ -17,40 +16,42 @@ The model combines:
 ### 1.1 The 3R2C Model
 
 The building thermal zone is approximated as a **3R2C network** consisting of:
-- Indoor air capacitance \( C_{in} \),
-- Envelope capacitance \( C_{en} \),
+- Indoor air capacitance (Cᵢₙ),
+- Envelope capacitance (Cₑₙ),
 - Resistances between nodes:
-  - \( R_{ia} \): indoor to ambient,
-  - \( R_{ie} \): indoor to envelope,
-  - \( R_{ea} \): envelope to ambient.
+  - Rᵢₐ: indoor to ambient,
+  - Rᵢₑ: indoor to envelope,
+  - Rₑₐ: envelope to ambient.
 
 The thermal balance equations are:
 
 $$
-C_{in} \frac{dT_{in}}{dt} =
-\frac{T_e - T_{in}}{R_{ie}} +
-\frac{T_a - T_{in}}{R_{ia}} +
-a_{\text{sol,in}} Q_{\text{sol}} +
-a_{\text{int,in}} Q_{\text{int}} +
-Q_{ah}
+C_{in}\,\frac{dT_{in}}{dt}
+=
+\frac{T_e - T_{in}}{R_{ie}}
++ \frac{T_a - T_{in}}{R_{ia}}
++ a_{\text{sol,in}}\, Q_{\text{sol}}
++ a_{\text{int,in}}\, Q_{\text{int}}
++ Q_{ah}
 $$
 
 $$
-C_{en} \frac{dT_e}{dt} =
-\frac{T_{in} - T_e}{R_{ie}} +
-\frac{T_a - T_e}{R_{ea}} +
-a_{\text{sol,en}} Q_{\text{sol}} +
-a_{\text{int,en}} Q_{\text{int}}
+C_{en}\,\frac{dT_e}{dt}
+=
+\frac{T_{in} - T_e}{R_{ie}}
++ \frac{T_a - T_e}{R_{ea}}
++ a_{\text{sol,en}}\, Q_{\text{sol}}
++ a_{\text{int,en}}\, Q_{\text{int}}
 $$
 
 where:
-- \(T_{in}\): indoor air temperature,
-- \(T_e\): envelope temperature,
-- \(T_a\): ambient (outdoor) temperature,
-- \(Q_{sol}\): solar gains (irradiance × glazing area × transmittance),
-- \(Q_{int}\): internal gains,
-- \(Q_{ah}\): HVAC/air handling unit heat flux,
-- \(a_{sol,in}, a_{sol,en}, a_{int,in}, a_{int,en}\): absorption distribution coefficients.
+- Tᵢₙ: indoor air temperature,
+- Tₑ: envelope temperature,
+- Tₐ: ambient (outdoor) temperature,
+- Qₛₒₗ: solar gains (irradiance × glazing area × transmittance),
+- Qᵢₙₜ: internal gains,
+- Qₐₕ: HVAC/air handling unit heat flux,
+- aₛₒₗ,ᵢₙ, aₛₒₗ,ₑₙ, aᵢₙₜ,ᵢₙ, aᵢₙₜ,ₑₙ: absorption distribution coefficients.
 
 ---
 
@@ -58,8 +59,8 @@ where:
 
 The state vector is:
 
-$$
-x =
+\[
+x = 
 \begin{bmatrix}
 T_e \\
 T_{in}
@@ -72,23 +73,23 @@ Q_{sol} \\
 Q_{int} \\
 Q_{ah}
 \end{bmatrix}
-$$
+\]
 
 The continuous dynamics can be written as:
 
-$$
+\[
 \dot{x}(t) = A x(t) + B u(t)
-$$
+\]
 
 Backward Euler integration gives a stable discrete-time update:
 
-$$
-(I - \Delta t A) x_{k+1} = x_k + \Delta t \, (B u_{k+1})
-$$
+\[
+(I - \Delta t \, A) \, x_{k+1} = x_k + \Delta t \, (B u_{k+1})
+\]
 
 where:
-- \(\Delta t\) is the timestep (30 minutes in our dataset),
-- \(A, B\) are system matrices derived from resistances and capacitances.
+- Δt is the timestep (30 minutes in our dataset),
+- A, B are system matrices derived from resistances and capacitances.
 
 ---
 
@@ -96,29 +97,22 @@ where:
 
 Initial parameter estimates are treated as **priors**.  
 These were calculated as analytical approximations for each home.
+In unconstrained space (ℝ):
 
-In unconstrained space (all real numbers):
-- Positive-only parameters (\(R, C, \sigma\)) use an exponential transform:
-
-$$
-z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
-$$
-
-- Fractional parameters (\(a \in (0,1)\)) use the sigmoid transform:
-
-$$
-a = \sigma(z) = \frac{1}{1 + e^{-z}}
-$$
+- Positive-only parameters (R, C, σ) use an exponential transform:  
+  \[
+  z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
+  \]
+- Fractional parameters (a ∈ (0,1)) use the sigmoid transform:  
+  \[
+  a = \sigma(z) = \frac{1}{1 + e^{-z}}
+  \]
 
 ADVI fits the posterior by maximising the **Evidence Lower Bound (ELBO):**
 
-$$
-\text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta) \| p(\theta))
-$$
-
-where:
-- \(q(\theta)\): variational Gaussian approximation of the posterior,
-- \(p(\theta)\): prior.
+\[
+\text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta)\,\|\,p(\theta))
+\]
 
 This yields calibrated RC parameters with uncertainty estimates.
 
@@ -126,54 +120,51 @@ This yields calibrated RC parameters with uncertainty estimates.
 
 ## 3. Residual Learning with Bayesian LSTM
 
-The RC model alone cannot capture all dynamics (e.g. sensor noise, measurement error, unmodelled physical processes).  
-
+The RC model alone cannot capture all dynamics (e.g. sensor noise, measurement error, or unmodelled thermal dynamics).  
 We define the **residual heating/cooling rate** as:
 
-$$
+\[
 y_t = \frac{\Delta T_{in,t}}{\Delta t} - \frac{\Delta T_{in,t}^{RC}}{\Delta t}
-$$
+\]
 
 where:
-- \(\Delta T_{in,t}\): observed indoor temperature change,
-- \(\Delta T_{in,t}^{RC}\): RC-predicted change.
+- ΔTᵢₙ,ₜ: observed indoor temperature change,
+- ΔTᵢₙ,ₜᴿᶜ: RC-predicted change.
 
 ### LSTM Residual Model
 
 An LSTM receives a **48-step input sequence (24 hours)** of features:
-- Weather: \(T_a\), irradiance, solar angles,
+- Weather: Tₐ, irradiance, solar angles,
 - HVAC/internal gains,
 - RC predictions,
 - Cyclical encodings of hour-of-day and day-of-week.
 
-It outputs a predictive distribution over \(y_t\).
+It outputs a predictive distribution over yₜ.
 
 ### Bayesian Output Layer
 
 A **Bayesian linear layer** provides uncertainty-aware predictions:
 
-$$
+\[
 \hat{y}_t \sim \mathcal{N}(\mu_t, \sigma_t^2)
-$$
+\]
 
 Weights are treated as random variables with Gaussian priors.  
 The loss combines:
 - Gaussian negative log-likelihood (NLL),
-- KL divergence between approximate posterior and prior.
-
-This balances **data fit** and **regularisation**.
+- KL-divergence between approximate posterior and prior.
 
 ---
 
 ## 4. Monte Carlo Prediction
 
 At test time, uncertainty is quantified via **Monte Carlo sampling**:
-1. Draw \(M\) stochastic forward passes through the Bayesian LSTM.
+1. Draw M stochastic forward passes through the Bayesian LSTM.
 2. Integrate predicted residuals into the RC baseline:
 
-$$
+\[
 T_{in,t}^{\text{pred}} = T_{in,t}^{RC} + r_t
-$$
+\]
 
 3. Collect ensemble statistics (mean, standard deviation) to form **predictive bands**.
 
@@ -182,32 +173,26 @@ $$
 ## 5. Metrics
 
 Performance is evaluated using:
-
-- **RMSE (Root Mean Squared Error):**
-
-$$
-\text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^N \left( T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}} \right)^2 }
-$$
-
-- **CVRMSE (Coefficient of Variation of RMSE):**
-
-$$
-\text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
-$$
+- **RMSE** (Root Mean Squared Error):
+  \[
+  \text{RMSE} = \sqrt{\frac{1}{N}\sum_{t=1}^N (T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}})^2}
+  \]
+- **CVRMSE** (Coefficient of Variation of RMSE):
+  \[
+  \text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
+  \]
 
 ---
 
 ## 6. Preprocessed Data
 
-This model requires the following data (not included in this repo for privacy):
-- Thermal output power of the ASHP [W],
-- Total direct irradiance [W/m²], window area [m²], and transmittance value (for solar gain),
-- Internal gain [W] (e.g. expected occupancy schedules from ISO Standards),
-- Fabric resistance [K/W] (reciprocal of area-averaged mean thermal transmittance),
-- Ventilation resistance [K/W] (dynamic, using Home Energy Model methodology),
-- Solar elevation/azimuth angles at each timestep (LSTM only).
-
-Data must be aggregated into a consistent interval (here: 30 min timesteps).
+While not provided here (for data protection), this model requires time-aligned inputs:
+- Heat pump output power [W],
+- Irradiance [W/m²], glazing area [m²], and transmittance (for solar gain),
+- Internal gain [W] (e.g. occupancy schedules per ISO standards),
+- Fabric resistance [K/W] (from thermal transmittance of the envelope),
+- Ventilation resistance [K/W] (from Home Energy Model methodology, dynamic value),
+- Solar elevation/azimuth angles (LSTM only).
 
 ---
 
@@ -226,4 +211,4 @@ Data must be aggregated into a consistent interval (here: 30 min timesteps).
 python 3R2C.py
 
 # Train hybrid RC–LSTM model
-python hybrid_rc_lstm.py
+python RC-LSTM.py
