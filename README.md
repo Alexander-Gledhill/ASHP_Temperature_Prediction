@@ -26,22 +26,20 @@ The building thermal zone is approximated as a **3R2C network** consisting of:
 The thermal balance equations are:
 
 $$
-C_{in}\,\frac{dT_{in}}{dt}
-=
-\frac{T_e - T_{in}}{R_{ie}}
-+ \frac{T_a - T_{in}}{R_{ia}}
-+ a_{\text{sol,in}}\, Q_{\text{sol}}
-+ a_{\text{int,in}}\, Q_{\text{int}}
-+ Q_{ah}
+C_{in} \frac{dT_{in}}{dt} =
+\frac{T_e - T_{in}}{R_{ie}} +
+\frac{T_a - T_{in}}{R_{ia}} +
+a_{\text{sol,in}} Q_{\text{sol}} +
+a_{\text{int,in}} Q_{\text{int}} +
+Q_{ah}
 $$
 
 $$
-C_{en}\,\frac{dT_e}{dt}
-=
-\frac{T_{in} - T_e}{R_{ie}}
-+ \frac{T_a - T_e}{R_{ea}}
-+ a_{\text{sol,en}}\, Q_{\text{sol}}
-+ a_{\text{int,en}}\, Q_{\text{int}}
+C_{en} \frac{dT_e}{dt} =
+\frac{T_{in} - T_e}{R_{ie}} +
+\frac{T_a - T_e}{R_{ea}} +
+a_{\text{sol,en}} Q_{\text{sol}} +
+a_{\text{int,en}} Q_{\text{int}}
 $$
 
 where:
@@ -59,8 +57,8 @@ where:
 
 The state vector is:
 
-\[
-x = 
+$$
+x =
 \begin{bmatrix}
 T_e \\
 T_{in}
@@ -73,19 +71,19 @@ Q_{sol} \\
 Q_{int} \\
 Q_{ah}
 \end{bmatrix}
-\]
+$$
 
 The continuous dynamics can be written as:
 
-\[
+$$
 \dot{x}(t) = A x(t) + B u(t)
-\]
+$$
 
 Backward Euler integration gives a stable discrete-time update:
 
-\[
-(I - \Delta t \, A) \, x_{k+1} = x_k + \Delta t \, (B u_{k+1})
-\]
+$$
+(I - \Delta t A) x_{k+1} = x_k + \Delta t \, (B u_{k+1})
+$$
 
 where:
 - Δt is the timestep (30 minutes in our dataset),
@@ -100,19 +98,19 @@ These were calculated as analytical approximations for each home.
 In unconstrained space (ℝ):
 
 - Positive-only parameters (R, C, σ) use an exponential transform:  
-  \[
+  $$
   z \sim \mathcal{N}(\mu, \sigma^2), \quad R = \exp(z)
-  \]
+  $$
 - Fractional parameters (a ∈ (0,1)) use the sigmoid transform:  
-  \[
+  $$
   a = \sigma(z) = \frac{1}{1 + e^{-z}}
-  \]
+  $$
 
 ADVI fits the posterior by maximising the **Evidence Lower Bound (ELBO):**
 
-\[
-\text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta)\,\|\,p(\theta))
-\]
+  $$
+  \text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta) \| p(\theta))
+  $$
 
 This yields calibrated RC parameters with uncertainty estimates.
 
@@ -123,9 +121,9 @@ This yields calibrated RC parameters with uncertainty estimates.
 The RC model alone cannot capture all dynamics (e.g. sensor noise, measurement error, or unmodelled thermal dynamics).  
 We define the **residual heating/cooling rate** as:
 
-\[
-y_t = \frac{\Delta T_{in,t}}{\Delta t} - \frac{\Delta T_{in,t}^{RC}}{\Delta t}
-\]
+  $$
+  y_t = \frac{\Delta T_{in,t}}{\Delta t} - \frac{\Delta T_{in,t}^{RC}}{\Delta t}
+  $$
 
 where:
 - ΔTᵢₙ,ₜ: observed indoor temperature change,
@@ -145,9 +143,9 @@ It outputs a predictive distribution over yₜ.
 
 A **Bayesian linear layer** provides uncertainty-aware predictions:
 
-\[
+$$
 \hat{y}_t \sim \mathcal{N}(\mu_t, \sigma_t^2)
-\]
+$$
 
 Weights are treated as random variables with Gaussian priors.  
 The loss combines:
@@ -162,9 +160,9 @@ At test time, uncertainty is quantified via **Monte Carlo sampling**:
 1. Draw M stochastic forward passes through the Bayesian LSTM.
 2. Integrate predicted residuals into the RC baseline:
 
-\[
+$$
 T_{in,t}^{\text{pred}} = T_{in,t}^{RC} + r_t
-\]
+$$
 
 3. Collect ensemble statistics (mean, standard deviation) to form **predictive bands**.
 
@@ -173,14 +171,14 @@ T_{in,t}^{\text{pred}} = T_{in,t}^{RC} + r_t
 ## 5. Metrics
 
 Performance is evaluated using:
-- **RMSE** (Root Mean Squared Error):
-  \[
-  \text{RMSE} = \sqrt{\frac{1}{N}\sum_{t=1}^N (T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}})^2}
-  \]
+- **RMSE** (Root Mean Squared Error): 
+  $$
+  \text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^N \left( T_{in,t}^{\text{pred}} - T_{in,t}^{\text{true}} \right)^2 }
+  $$
 - **CVRMSE** (Coefficient of Variation of RMSE):
-  \[
+  $$
   \text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
-  \]
+  $$
 
 ---
 
