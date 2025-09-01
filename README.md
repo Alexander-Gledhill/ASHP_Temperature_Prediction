@@ -27,7 +27,7 @@ The thermal balance equations are:
 
 $$
 C_{in} \frac{dT_{in}}{dt} =
-\frac{T_e - T_{in}}{R_{ie}} +
+\frac{T_en - T_{in}}{R_{ie}} +
 \frac{T_a - T_{in}}{R_{ia}} +
 a_{\text{sol,in}} Q_{\text{sol}} +
 a_{\text{int,in}} Q_{\text{int}} +
@@ -36,8 +36,8 @@ $$
 
 $$
 C_{en} \frac{dT_e}{dt} =
-\frac{T_{in} - T_e}{R_{ie}} +
-\frac{T_a - T_e}{R_{ea}} +
+\frac{T_{in} - T_en}{R_{ie}} +
+\frac{T_a - T_en}{R_{ea}} +
 a_{\text{sol,en}} Q_{\text{sol}} +
 a_{\text{int,en}} Q_{\text{int}}
 $$
@@ -46,9 +46,9 @@ where:
 - Tᵢₙ: indoor air temperature,
 - Tₑ: envelope temperature,
 - Tₐ: ambient (outdoor) temperature,
-- Qₛₒₗ: solar gains (irradiance × glazing area × transmittance),
-- Qᵢₙₜ: internal gains,
-- Qₐₕ: HVAC/air handling unit heat flux,
+- Qₛₒₗ: solar gains [W] (irradiance × glazing area × transmittance),
+- Qᵢₙₜ: internal gains [w],
+- Qₐₕ: ASHP heat flux [W],
 - aₛₒₗ,ᵢₙ, aₛₒₗ,ₑₙ, aᵢₙₜ,ᵢₙ, aᵢₙₜ,ₑₙ: absorption distribution coefficients.
 
 ---
@@ -115,6 +115,7 @@ $$
 \text{ELBO} = \mathbb{E}_q[\log p(D \mid \theta)] - \text{KL}(q(\theta) \| p(\theta))
 $$
 
+Where KL is the Kullback–Leibler divergence, a measure of how much a model probability distribution Q is different from a true probability distribution P 
 This yields calibrated RC parameters with uncertainty estimates.
 
 ---
@@ -136,7 +137,8 @@ where:
 
 An LSTM receives a **48-step input sequence (24 hours)** of features:
 - Weather: Tₐ, irradiance, solar angles,
-- HVAC/internal gains,
+- ASHP thermal output
+- Solar / internal gains
 - RC predictions,
 - Cyclical encodings of hour-of-day and day-of-week.
 
