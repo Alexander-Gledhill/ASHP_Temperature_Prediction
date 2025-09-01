@@ -182,12 +182,12 @@ Performance is evaluated using:
 
 While not provided here (for the sake of data protection) this model requires data for the:
 - Thermal output power of the ASHP [W]
-- Total direct irradiance (W/m^2), window area (m^2) and transmittance value (for solar gain calculation)
+- Total direct irradiance [W/m^2], window area [m^2] and transmittance value (for solar gain calculation)
 - Internal gain [W] (we used the expected internal gain based on occupancy schedules listed by ISO Standards)
 - Fabric resistance [K/W] (e.g. the reciprocal of the area-averaged mean thermal transmittance for the envelope)
 - Ventilation resistance [K/W] (calculating using Home Energy Model methodology, dynamic value)
 - Solar elevation/azimuth angles at each timestep (LSTM only)
-These must be aggregated into a consistent time interval, with timesteps listed in the index column (here we chose 30 min intervals)
+\These must be aggregated into a consistent time interval, with timesteps listed in the index column (here we chose 30 min intervals)
 ---
 
 ## 6. Repository Structure
