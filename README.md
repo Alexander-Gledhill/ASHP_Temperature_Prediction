@@ -190,7 +190,7 @@ While not provided here (for the sake of data protection) this model requires da
 - These must be aggregated into a consistent time interval, with timesteps listed in the index column (here we chose 30 min intervals)
 ---
 
-## 6. Repository Structure
+## 7. Repository Structure
 
 - `3R2C.py`: Physics-only RC model + ADVI calibration.
 - `RC-LSTM.py`: Hybrid RC–LSTM implementation.
@@ -198,7 +198,7 @@ While not provided here (for the sake of data protection) this model requires da
 
 ---
 
-## 7. References
+## 8. References
 
 - State-space building thermal models: Clarke, J. (2001). *Energy Simulation in Building Design*.  
 - ADVI: Kucukelbir et al. (2017). *Automatic Differentiation Variational Inference*.  
@@ -206,7 +206,7 @@ While not provided here (for the sake of data protection) this model requires da
 
 ---
 
-## 8. Usage
+## 9. Usage
 
 ```bash
 # Train RC model parameters with ADVI
