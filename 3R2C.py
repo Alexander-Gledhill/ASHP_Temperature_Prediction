@@ -37,7 +37,7 @@ ADVI_ITERS  = 3000
 # Learning rate for Adam optimiser
 ADVI_LR     = 1e-2
 ADVI_SEED   = 42
-# Gardually increase the KL penalty so that it doesn't defect to the prior
+# Gradually increase the KL penalty so that it doesn't defect to the prior
 KL_WARMUP   = 800
 
 SEED = 42
@@ -47,7 +47,7 @@ np.random.seed(SEED); torch.manual_seed(SEED)
 df = pd.read_csv(INPUT_FILE, parse_dates=["timestamp"])
 df = df.sort_values("timestamp").set_index("timestamp")
 
-# Required input columns (assumed pre-cleaned and aligned to 30 min)
+# Required input columns (assumed preprocessed and aligned to 30 min)
 Tin  = df[COLS["Tin"]].to_numpy(np.float32)
 To   = df[COLS["To"]].to_numpy(np.float32)
 Irr  = df[COLS["I"]].to_numpy(np.float32)
@@ -66,16 +66,16 @@ mask_advi  = np.arange(steps_week)
 
 class RCBackwardEuler(nn.Module):
     """
-    3R2C thermal network solved with backward Euler integration.
+    3R2C thermal network solved with Backward Euler integration.
     States:
         Te  = envelope temperature
         Tin = indoor air temperature
     Inputs:
         To   = outdoor temperature
-        Irr  = solar irradiance
+        Irr  = solar irradiance (later mutliplied by glazed area and transmittance to get solar gain)
         Qint = internal gains
         Qah  = ASHP heat flux (input heating/cooling)
-        Ria  = ventilation resistance
+        Ria  = ventilation resistance (K/W)
     """
 
     def __init__(self, dt_s, g=G_TRANSMITTANCE, Az=A_Z_FIXED, substeps=1):
@@ -104,7 +104,7 @@ class RCBackwardEuler(nn.Module):
                                params["R_ea"].to(DTYPE),
                                params["C_in"].to(DTYPE),
                                params["C_en"].to(DTYPE))
-        # Absorption coefficients for solar/internal splits
+        # Absorption coefficients for indoor/envelope splits
         a_si,a_se,a_ii,a_ie = (params["a_sol_in"].to(DTYPE),
                                params["a_sol_en"].to(DTYPE),
                                params["a_int_in"].to(DTYPE),
@@ -167,7 +167,7 @@ ADVI_PRIORS = dict(
     C_in     = dict(mean=317_137.8,  sd_uncon=1.0), # J/K
     C_en     = dict(mean=55_500_000, sd_uncon=1.0), # J/K
     # Absorption Coefficients
-    a_sol_in = dict(mean=0.5,        sd_uncon=0.7), # More confidence for coefficients (lower sd)
+    a_sol_in = dict(mean=0.5,        sd_uncon=0.7), # More confidence for absorption coefficients (lower sd)
     a_sol_en = dict(mean=0.5,        sd_uncon=0.7),
     a_int_in = dict(mean=0.5,        sd_uncon=0.7),
     a_int_en = dict(mean=0.5,        sd_uncon=0.7),
@@ -201,7 +201,7 @@ def advi_rc_week1(
 
     # Variational parameter constructor in the unconstrained space:
     #   - 'mu' is the mean of q(z)
-    #   - 'rho' parameterizes std via softplus(rho) to ensure positivity
+    #   - 'rho' parameterizes standard deviation via softplus(rho) to ensure positive
     def make_var_uncon(mu0):
         mu  = torch.tensor(mu0, dtype=DTYPE, device=DEVICE, requires_grad=True)
         rho = torch.tensor(-2.0, dtype=DTYPE, device=DEVICE, requires_grad=True)
@@ -284,7 +284,7 @@ def advi_rc_week1(
         if not torch.isfinite(elbo):
             raise FloatingPointError("[ADVI] Non-finite ELBO encountered.")
         
-        # Gradient ascent on ELBO  <=>  gradient descent on (-ELBO)
+        # Gradient ascent on ELBO = gradient descent on (-ELBO)
         (-elbo).backward()
         torch.nn.utils.clip_grad_norm_([p for d in q.values() for p in d.values()], max_norm=5.0)
         opt.step()
@@ -320,7 +320,7 @@ print("\nPosterior mean parameters (RC):")
 for k,v in P_post.items():
     print(f"  {k:10s} = {v:.6g}")
 
-# 4) 96-hour FREE-RUN forecast on a FIXED shared window (poster style) ====
+# 4) 96-hour FREE-RUN forecast on a fixed shared window (generated for the sake of the paper)
 # For the sake of visual clarity we chose a 4-day forecast, this can be increased
 
 HOURS = 96
@@ -329,7 +329,7 @@ HOURS = 96
 FIXED_START_STR = "2024-04-04 00:00:00"
 fixed_start = pd.to_datetime(FIXED_START_STR)
 
-# Convert the fixed start into a positional slice [start:end)
+# Convert the fixed start into a positional slice [start:end]
 # - need = number of timesteps corresponding to 96 hours
 # - start_pos = index position of the fixed start
 # - end_pos = start_pos + number of required steps
@@ -343,7 +343,6 @@ if end_pos > len(df.index):
 fcst_slice = slice(start_pos, end_pos)
 
 # Posterior sampling and rollout
-
 def sample_rc_params_nat(q_post, S=300, include_sigma=True):
     """
     Draw S samples from the variational posterior (q_post) and transform
@@ -356,7 +355,7 @@ def sample_rc_params_nat(q_post, S=300, include_sigma=True):
       sigma : representative observational noise (median of draws)
     """
     pars, sigmas = [], []
-    for _ in range(S):
+    for i in range(S):
         p = {}
         for name, vr in q_post.items():
             mu, rho = vr["mu"], vr["rho"]
@@ -376,7 +375,7 @@ def sample_rc_params_nat(q_post, S=300, include_sigma=True):
 
 def rc_rollout_free_run(params_nat, Tin_np, To_np, Irr_np, Qint_np, Qah_np, Ria_np, dt_s):
     """
-    Run a forward simulation of the RC model using given parameters.
+    Run a forward simulation of the RC model using given inferred parameters.
     Inputs are numpy arrays, converted to tensors.
     Returns: predicted indoor temperature trajectory as a numpy array.
     """
@@ -430,5 +429,6 @@ def rmse(a,b):
 def cvrmse(a,b): 
     """ Coefficient of Variation of RMSE (% of mean observed value) """
     return 100.0*rmse(a,b)/float(np.mean(b))
+
 
 print(f"[RC fixed {HOURS}h] RMSE={rmse(mean_rc, Tin_fc):.2f} °C  |  CVRMSE={cvrmse(mean_rc, Tin_fc):.2f}%")
