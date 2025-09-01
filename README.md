@@ -177,15 +177,23 @@ Performance is evaluated using:
   \[
   \text{CVRMSE} = 100 \times \frac{\text{RMSE}}{\bar{T}_{in}}
   \]
+---
+## 6. Preprocessed Data
 
+While not provided here (for the sake of data protection) this model requires data for the:
+- Thermal output power of the ASHP [W]
+- Total direct irradiance (W/m^2), window area (m^2) and transmittance value (for solar gain calculation)
+- Internal gain [W] (we used the expected internal gain based on occupancy schedules listed by ISO Standards)
+- Fabric resistance [K/W] (e.g. the reciprocal of the area-averaged mean thermal transmittance for the envelope)
+- Ventilation resistance [K/W] (calculating using Home Energy Model methodology, dynamic value)
+- Solar elevation/azimuth angles at each timestep (LSTM only)
+These must be aggregated into a consistent time interval, with timesteps listed in the index column (here we chose 30 min intervals)
 ---
 
 ## 6. Repository Structure
 
 - `3R2C.py`: Physics-only RC model + ADVI calibration.
-- `hybrid_rc_lstm.py`: Hybrid RC–LSTM implementation.
-- `data/`: Folder for input CSV files (preprocessed).
-- `notebooks/`: Example Jupyter notebooks for training & evaluation.
+- `RC-LSTM.py`: Hybrid RC–LSTM implementation.
 - `README.md`: This document.
 
 ---
