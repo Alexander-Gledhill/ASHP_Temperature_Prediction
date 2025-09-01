@@ -28,22 +28,20 @@ The thermal balance equations are:
 The thermal balance equations are:
 
 $$
-C_{in}\,\frac{dT_{in}}{dt}
-=
-\frac{T_e - T_{in}}{R_{ie}}
-+ \frac{T_a - T_{in}}{R_{ia}}
-+ a_{\text{sol,in}}\, Q_{\text{sol}}
-+ a_{\text{int,in}}\, Q_{\text{int}}
-+ Q_{ah}
+C_{in}\,\frac{dT_{in}}{dt} =
+\frac{T_e - T_{in}}{R_{ie}} +
+\frac{T_a - T_{in}}{R_{ia}} +
+a_{\text{sol,in}} Q_{\text{sol}} +
+a_{\text{int,in}} Q_{\text{int}} +
+Q_{ah}
 $$
 
 $$
-C_{en}\,\frac{dT_e}{dt}
-=
-\frac{T_{in} - T_e}{R_{ie}}
-+ \frac{T_a - T_e}{R_{ea}}
-+ a_{\text{sol,en}}\, Q_{\text{sol}}
-+ a_{\text{int,en}}\, Q_{\text{int}}
+C_{en}\,\frac{dT_e}{dt} =
+\frac{T_{in} - T_e}{R_{ie}} +
+\frac{T_a - T_e}{R_{ea}} +
+a_{\text{sol,en}} Q_{\text{sol}} +
+a_{\text{int,en}} Q_{\text{int}}
 $$
 
 where:
