@@ -25,6 +25,8 @@ The building thermal zone is approximated as a **3R2C network** consisting of:
 
 The thermal balance equations are:
 
+The thermal balance equations are:
+
 $$
 C_{in}\,\frac{dT_{in}}{dt}
 =
