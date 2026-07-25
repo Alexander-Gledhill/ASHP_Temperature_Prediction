@@ -1,13 +1,8 @@
 """
 3R2C_model.py
 ===========
-3R2C RC-network model: ADVI calibration + free-run evaluation, for a single
-IGL home. Home-specific physical parameters (window area, R_ie/R_ea/C_in
-priors) are read automatically from the metadata file -- no manual editing
-needed per home.
-
-Usage:
-    python RC_model.py --igl 651 --input IGL651_processed__imputed.csv --metadata Metadata.xlsx
+3R2C RC-network model: ADVI calibration + free-run evaluation, for a single home. Home-specific physical parameters (window area, R_ie/R_ea/C_in
+priors) are read automatically from the metadata file needed per home.
 """
 
 import argparse
@@ -37,7 +32,6 @@ COLS = dict(
 G_TRANSMITTANCE = 0.76
 
 ADVI_DAYS = 7
-ADVI_DAYS_TRANSFER = 2      # used only by the Phase-2 transfer-learning script
 ADVI_ITERS = 3000
 ADVI_LR = 1e-2
 ADVI_SEED = 42
@@ -473,7 +467,7 @@ def evaluate_free_run(rc, q_post, Tin_np, To_np, Irr_np, Qint_np, Qah_np, Ria_np
 
 
 # =============================================================
-# Main (single-home CLI, kept for standalone testing on your laptop)
+# Main (single-home CLI)
 # =============================================================
 def run_rc(igl, input_file, metadata_path):
     print(f"\n{'=' * 70}\nRC model -- IGL{igl}\n{'=' * 70}")
