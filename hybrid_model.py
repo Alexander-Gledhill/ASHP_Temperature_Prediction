@@ -1,12 +1,7 @@
 """
 hybrid_model.py
 ================================
-Independent residual-level hybrid model. Patched to add: uncertainty-source decomposition (RC epistemic /
-LSTM epistemic / LSTM aleatoric / full), PICP for rc_full and hybrid_full,
-ADVI degeneracy flagging, and the extra metadata Phase 1 needs.
-
-Usage:
-    python hybrid_model.py --igl {} --input IGL{}.csv --metadata Metadata.xlsx
+Independent residual-level hybrid model.
 """
 
 import argparse
@@ -56,7 +51,7 @@ IDX_DTIN_RC = 6
 
 
 # =============================================================
-# Time-of-day / day-of-week / solar-angle features (unchanged)
+# Time-of-day / day-of-week / solar-angle features
 # =============================================================
 def build_time_solar_features(df):
     idx = df.index
@@ -116,7 +111,7 @@ def mode_a_rollout(rc, P_post, Tin0_val, To, Irr, Qint, Qah, Ria):
 
 
 # =============================================================
-# Windowed dataset -- target is residual LEVEL (degC)
+# Windowed dataset -- target is residual level (degC)
 # =============================================================
 def build_window_ends(Xn, y, seq_len):
     n = len(y)
@@ -227,10 +222,7 @@ def train_hybrid_lstm(model, train_ds, val_ds, max_epochs=MAX_EPOCHS, patience=P
 
 
 # =============================================================
-# Independent per-step rollout -- NOW with dropout / residual_noise toggles
-# so the same function serves the full stochastic forecast AND the three
-# isolated-source decomposition rollouts (mirrors recursive_hybrid_rollout
-# in hybrid_model.py, adapted for this architecture's no-accumulation rule).
+# Independent per-step rollout
 # =============================================================
 def independent_hybrid_rollout(model, Tin_rc_eval_raw, Tin_rc_eval_norm, dTin_rc_eval_norm,
                                 shared_eval_norm, lookback_n, seq_len, S, seed=SEED,
@@ -350,7 +342,7 @@ def run_hybrid(igl, input_file, metadata_path, S=S_DEFAULT):
                           "C_in": home_priors["c_in"], "C_en": 55_500_000}
     flagged_params = rcm.check_advi_degenerate(P_post, prior_means_check, igl=igl)
 
-    # ---- Stage 1: Mode A -- deterministic CONTINUOUS rollout over training block ----
+    # ---- Stage 1: Mode A -- deterministic continuous rollout over training block ----
     Tin_block = Tin[train_start_i:train_end_i]
     Tin_rc_block = mode_a_rollout(
         rc, P_post, Tin_block[0],
@@ -392,7 +384,7 @@ def run_hybrid(igl, input_file, metadata_path, S=S_DEFAULT):
     model = HybridLSTM(in_dim=len(feature_cols)).to(DEVICE)
     model = train_hybrid_lstm(model, train_ds, val_ds)
 
-    # ---- Stage 4: Mode B -- batched S-draw RC rollout over the eval window ----
+    # ---- Stage 4: Mode B -- batched S-draw RC rollout over the evaluation window ----
     torch.manual_seed(SEED)
     draws, _sigmas = rcm.sample_posterior_draws(q_post, S)
     Tin0_eval = torch.full((S,), float(Tin[eval_start_i]), dtype=DTYPE, device=DEVICE)
@@ -449,7 +441,7 @@ def run_hybrid(igl, input_file, metadata_path, S=S_DEFAULT):
     print(f"\n[sanity] Naive constant-offset baseline (RC + {constant_offset:+.3f} degC): "
           f"RMSE={naive_rmse:.3f} degC | CVRMSE={naive_cvrmse:.2f}%")
 
-    # ---- Stage 5b: uncertainty decomposition (3 extra cheap inference-only rollouts) ----
+    # ---- Stage 5b: uncertainty decomposition ----
     Tin_rc_eval_mean_1d = mode_a_rollout(
         rc, P_post, Tin[eval_start_i],
         To[eval_start_i:eval_end_i], Irr[eval_start_i:eval_end_i],
@@ -478,7 +470,7 @@ def run_hybrid(igl, input_file, metadata_path, S=S_DEFAULT):
 
     hybrid_overall, hybrid_horizon = compute_horizon_table(mean_pred, Tin_true_eval, dt_h)
 
-    # RC-only baseline over the identical eval window
+    # RC-only baseline over the identical evaluation window
     rc_mean, rc_std, rc_std_epistemic, rc_overall, rc_horizon, horizon_h_arr, rc_picp_overall, rc_picp_horizon = \
         rcm.evaluate_free_run(
             rc, q_post, Tin_true_eval,
